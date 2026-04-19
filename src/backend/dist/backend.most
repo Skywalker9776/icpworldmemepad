@@ -1,0 +1,193 @@
+// Version: 1.0.0
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type ExternalBlob__246066408 = Blob;
+type FeeRecord__447821764 =
+  {
+    amount : Nat;
+    depositAddress : Text;
+    timestamp : Time__900049286;
+    user : Principal
+  };
+type Int__270357528 = Int__616954475;
+type Int__616954475 = Int;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type InviteCode__761281821 =
+  {code : Text; created : Time__900049286; used : Bool};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type LiquidityLock__841973535 =
+  {
+    amount : Nat;
+    duration : Nat;
+    isLocked : Bool;
+    unlockDate : Time__900049286
+  };
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
+type Memecoin__116629018 =
+  {
+    category : Text;
+    createdAt : Time__900049286;
+    creator : Principal;
+    description : Text;
+    liquidityLock : LiquidityLock__841973535;
+    logo : ExternalBlob__246066408;
+    name : Text;
+    symbol : Text;
+    totalSupply : Nat
+  };
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type OwnershipRecord__920620645 =
+  {amount : Nat; memecoin : Text; owner : Principal; percentage : Nat};
+type RSVP__815186634 =
+  {
+    attending : Bool;
+    inviteCode : Text;
+    name : Text;
+    timestamp : Time__900049286
+  };
+type Referral__159659315 =
+  {
+    createdAt : Time__900049286;
+    referralCode : Text;
+    referredUsers : [Principal];
+    referrer : Principal
+  };
+type StripeConfiguration__96897619 =
+  {allowedCountries : [Text]; secretKey : Text};
+type Time__796480547 = Int__270357528;
+type Time__900049286 = Time__796480547;
+type TradeApproval__802634168 =
+  {
+    amount : Nat;
+    buyer : Principal;
+    expiresAt : Time__900049286;
+    memecoin : Text;
+    price : Nat;
+    seller : Principal
+  };
+type TradingTransaction__453318580 =
+  {
+    amount : Nat;
+    buyer : Principal;
+    memecoin : Text;
+    price : Nat;
+    seller : Principal;
+    timestamp : Time__900049286
+  };
+type TransactionStatus__426104033 = {#confirmed; #failed; #pending};
+type TransactionType__767491300 = {#deposit; #withdrawal};
+type Transaction__865268250 =
+  {
+    amount : Nat;
+    confirmationDetails : ?Text;
+    destinationAddress : ?Text;
+    id : Text;
+    memecoin : ?Text;
+    status : TransactionStatus__426104033;
+    timestamp : Time__900049286;
+    transactionType : TransactionType__767491300;
+    user : Principal
+  };
+type UserProfile__491224006 =
+  {createdAt : Time__900049286; email : Text; name : Text};
+type UserRole__1054455867 = {#admin; #guest; #user};
+type Wallet__442667382 =
+  {
+    balance : Nat;
+    createdAt : Time__900049286;
+    depositAddress : Text;
+    owner : Principal
+  };
+actor {
+  stable accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__605269027<Principal, UserRole__1054455867>
+    };
+  stable var ceoPrincipal : ?Principal;
+  stable var depositAddresses :
+    {var root : Node__46230540<Principal, Text>; var size : Nat__490723111};
+  stable var designatedCEOs :
+    {var root : Node__46230540<Principal, Bool>; var size : Nat__490723111};
+  stable var feeRecords :
+    {
+      var root : Node__46230540<Text, [FeeRecord__447821764]>;
+      var size : Nat__490723111
+    };
+  stable inviteState :
+    {
+      var inviteCodes : Map__605269027<Text, InviteCode__761281821>;
+      var rsvps : Map__605269027<Text, RSVP__815186634>
+    };
+  stable var isAccessControlInitialized : Bool;
+  stable var memecoinCreationAttempts :
+    {
+      var root : Node__46230540<Principal, Time__900049286>;
+      var size : Nat__490723111
+    };
+  stable var memecoinNames :
+    {var root : Node__46230540<Text, Text>; var size : Nat__490723111};
+  stable var memecoins :
+    {
+      var root : Node__46230540<Text, Memecoin__116629018>;
+      var size : Nat__490723111
+    };
+  stable officialDepositAddress1 : Text;
+  stable officialDepositAddress2 : Text;
+  stable var ownershipRecords :
+    {
+      var root : Node__46230540<Text, OwnershipRecord__920620645>;
+      var size : Nat__490723111
+    };
+  stable var referralTrackingAttempts :
+    {
+      var root : Node__46230540<Principal, Time__900049286>;
+      var size : Nat__490723111
+    };
+  stable var referrals :
+    {
+      var root : Node__46230540<Text, Referral__159659315>;
+      var size : Nat__490723111
+    };
+  stable var stripeConfiguration : ?StripeConfiguration__96897619;
+  stable var tradeApprovals :
+    {
+      var root : Node__46230540<Text, TradeApproval__802634168>;
+      var size : Nat__490723111
+    };
+  stable var tradeAttempts :
+    {
+      var root : Node__46230540<Principal, Time__900049286>;
+      var size : Nat__490723111
+    };
+  stable var tradingFeeRate : Nat;
+  stable var tradingTransactions :
+    {
+      var root : Node__46230540<Text, [TradingTransaction__453318580]>;
+      var size : Nat__490723111
+    };
+  stable var transactions :
+    {
+      var root : Node__46230540<Principal, [Transaction__865268250]>;
+      var size : Nat__490723111
+    };
+  stable var usedReferralCodes :
+    {var root : Node__46230540<Principal, Text>; var size : Nat__490723111};
+  stable var userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    };
+  stable var wallets :
+    {
+      var root : Node__46230540<Principal, Wallet__442667382>;
+      var size : Nat__490723111
+    }
+};

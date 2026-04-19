@@ -1,0 +1,33 @@
+{
+  "name": "Icpworldmemepad",
+  "short_name": "Icpworldmemepad",
+  "description": "Create and trade ICP memecoins on the Internet Computer Protocol blockchain",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a0f2e",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/generated/pwa-icon.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/generated/pwa-splash.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": [
+    {
+      "src": "/assets/generated/referral-share-preview.dim_1200x630.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+type http_request_result = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type http_header = 
+ record {
+   name: text;
+   value: text;
+ };
+type _ImmutableObjectStorageRefillResult = 
+ record {
+   success: opt bool;
+   topped_up_amount: opt nat;
+ };
+type _ImmutableObjectStorageRefillInformation = record {
+                                                  proposed_top_up_amount:
+                                                   opt nat;};
+type _ImmutableObjectStorageCreateCertificateResult = 
+ record {
+   blob_hash: text;
+   method: text;
+ };
+type Wallet = 
+ record {
+   balance: nat;
+   createdAt: Time;
+   depositAddress: text;
+   owner: principal;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfile = 
+ record {
+   createdAt: Time;
+   email: text;
+   name: text;
+ };
+type TransformationOutput = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type TransformationInput = 
+ record {
+   context: blob;
+   response: http_request_result;
+ };
+type TransactionType = 
+ variant {
+   deposit;
+   withdrawal;
+ };
+type TransactionStatus = 
+ variant {
+   confirmed;
+   failed;
+   pending;
+ };
+type Transaction = 
+ record {
+   amount: nat;
+   confirmationDetails: opt text;
+   destinationAddress: opt text;
+   id: text;
+   memecoin: opt text;
+   status: TransactionStatus;
+   timestamp: Time;
+   transactionType: TransactionType;
+   user: principal;
+ };
+type TradingTransaction = 
+ record {
+   amount: nat;
+   buyer: principal;
+   memecoin: text;
+   price: nat;
+   seller: principal;
+   timestamp: Time;
+ };
+type Time = int;
+type StripeSessionStatus = 
+ variant {
+   completed: record {
+                response: text;
+                userPrincipal: opt text;
+              };
+   failed: record {error: text;};
+ };
+type StripeConfiguration = 
+ record {
+   allowedCountries: vec text;
+   secretKey: text;
+ };
+type ShoppingItem = 
+ record {
+   currency: text;
+   priceInCents: nat;
+   productDescription: text;
+   productName: text;
+   quantity: nat;
+ };
+type Referral = 
+ record {
+   createdAt: Time;
+   referralCode: text;
+   referredUsers: vec principal;
+   referrer: principal;
+ };
+type RSVP = 
+ record {
+   attending: bool;
+   inviteCode: text;
+   name: text;
+   timestamp: Time;
+ };
+type OwnershipRecord = 
+ record {
+   amount: nat;
+   memecoin: text;
+   owner: principal;
+   percentage: nat;
+ };
+type Memecoin = 
+ record {
+   category: text;
+   createdAt: Time;
+   creator: principal;
+   description: text;
+   liquidityLock: LiquidityLock;
+   logo: ExternalBlob;
+   name: text;
+   symbol: text;
+   totalSupply: nat;
+ };
+type LiquidityLock = 
+ record {
+   amount: nat;
+   duration: nat;
+   isLocked: bool;
+   unlockDate: Time;
+ };
+type InviteCode = 
+ record {
+   code: text;
+   created: Time;
+   used: bool;
+ };
+type FeeRecord = 
+ record {
+   amount: nat;
+   depositAddress: text;
+   timestamp: Time;
+   user: principal;
+ };
+type ExternalBlob = blob;
+service : {
+  _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
+  _immutableObjectStorageBlobsToDelete: () -> (vec blob) query;
+  _immutableObjectStorageConfirmBlobDeletion: (blobs: vec blob) -> ();
+  _immutableObjectStorageCreateCertificate: (blobHash: text) ->
+   (_ImmutableObjectStorageCreateCertificateResult);
+  _immutableObjectStorageRefillCashier: (refillInformation:
+   opt _ImmutableObjectStorageRefillInformation) ->
+   (_ImmutableObjectStorageRefillResult);
+  _immutableObjectStorageUpdateGatewayPrincipals: () -> ();
+  _initializeAccessControl: () -> ();
+  approveTrade: (memecoin: text, buyer: principal, amount: nat, price:
+   nat) -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  createCheckoutSession: (items: vec ShoppingItem, successUrl: text,
+   cancelUrl: text) -> (text);
+  createMemecoin: (name: text, symbol: text, description: text, totalSupply:
+   nat, logo: ExternalBlob, lockDuration: nat, category: text) -> ();
+  designateCEO: ("principal": principal) -> ();
+  generateInviteCode: () -> (text);
+  generateReferralLink: () -> (text);
+  getActorId: () -> (text) query;
+  getAllOwnershipRecords: () -> (vec OwnershipRecord) query;
+  getAllRSVPs: () -> (vec RSVP) query;
+  getAllReferrals: () -> (vec Referral) query;
+  getAllTradingTransactions: () -> (vec TradingTransaction) query;
+  getAvailableCategories: () -> (vec text) query;
+  getCEO: () -> (text) query;
+  getCEOPrincipal: () -> (opt principal) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getCallerWallet: () -> (opt Wallet) query;
+  getDepositAddress: () -> (text);
+  getFeeRecords: () -> (vec FeeRecord) query;
+  getHotMemecoins: () -> (vec Memecoin) query;
+  getIcpswapWalletAddress: () -> (text) query;
+  getIcpswapWalletBalance: () -> (nat) query;
+  getIcpswapWalletConnectionStatus: () -> (bool) query;
+  getInviteCodes: () -> (vec InviteCode) query;
+  getLiquidityLocks: () -> (vec LiquidityLock) query;
+  getMemecoins: () -> (vec Memecoin) query;
+  getMemecoinsbyCategory: (cat: text) -> (vec Memecoin) query;
+  getNewMemecoins: () -> (vec Memecoin) query;
+  getOfficialDepositAddresses: () -> (vec text) query;
+  getOfficialTelegram: () -> (text) query;
+  getOfficialTwitter: () -> (text) query;
+  getOwnershipRecords: () -> (vec OwnershipRecord) query;
+  getProgressingMemecoins: () -> (vec Memecoin) query;
+  getReferralCode: () -> (text) query;
+  getReferralStats: () -> (opt Referral) query;
+  getStripeSessionStatus: (sessionId: text) -> (StripeSessionStatus);
+  getTradingFeeRate: () -> (nat) query;
+  getTradingTransactions: () -> (vec TradingTransaction) query;
+  getTransactionHistory: () -> (vec Transaction) query;
+  getTrendingMemecoins: () -> (vec Memecoin) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  getWalletConnectionOptions: () -> (vec record {
+                                           text;
+                                           bool;
+                                         }) query;
+  initializeAccessControl: () -> ();
+  isCEO: () -> (bool) query;
+  isCallerAdmin: () -> (bool) query;
+  isStripeConfigured: () -> (bool) query;
+  revokeCEO: ("principal": principal) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  setStripeConfiguration: (config: StripeConfiguration) -> ();
+  setTradingFeeRate: (newRate: nat) -> ();
+  submitRSVP: (name: text, attending: bool, inviteCode: text) -> ();
+  trackReferral: (code: text) -> ();
+  tradeMemecoin: (memecoin: text, amount: nat, price: nat, seller:
+   principal) -> ();
+  transform: (input: TransformationInput) -> (TransformationOutput) query;
+  withdrawICP: (amount: nat, destinationAddress: text) -> (text);
+}
