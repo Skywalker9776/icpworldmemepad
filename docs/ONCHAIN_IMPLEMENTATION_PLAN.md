@@ -31,7 +31,10 @@ Not implemented or not verified:
 - No wallet signer integration or user-approved ICP transfer flow.
 - No ICRC token canister deployment or initial supply distribution.
 - No ICPSwap pool discovery, swap execution, or liquidity provision.
-- No successful Motoko build, frontend typecheck, or integration test has been run in this environment.
+- Frontend TypeScript typecheck and production build pass in GitHub Actions.
+- Motoko backend compiles successfully with the pinned Mops toolchain in GitHub Actions.
+- No stable-state compatibility check is available because the configured baseline `.old/src/backend/dist/backend.most` is absent from the repository.
+- No live-canister verification or end-to-end integration test has been performed.
 - No Caffeine draft promotion, canister deployment, or mainnet verification has been performed.
 
 Important account model:
@@ -103,7 +106,7 @@ A follow-up inspection of `src/frontend/src/pages/SwapPage.tsx` and `CreateMemec
 - CreateMemecoinPage still presents a successful launch state with a fabricated contract-address string after the mutation callback. The backend now rejects token creation, so the UI must not imply that launch can succeed.
 - The create page's fee panel and safety checklist still make claims about a 2 ICP charge, ownership cap, auto-locked liquidity, and on-chain deployment that have not been implemented or verified.
 
-These are source-level findings from the development branch. The corresponding UI has not yet been changed or build-tested. The release runbook in `docs/CAFFEINE_BUILD_AND_PUBLISH_RUNBOOK.md` gives the safe hosted-builder workflow and a complete remediation prompt.
+These were source-level findings from the development branch. The corresponding UI has since been corrected on the development branch, and the frontend typecheck and production build have passed in GitHub Actions. The release runbook in `docs/CAFFEINE_BUILD_AND_PUBLISH_RUNBOOK.md` gives the safe hosted-builder workflow and a complete remediation prompt.
 
 ## Deployment workflow clarification
 
