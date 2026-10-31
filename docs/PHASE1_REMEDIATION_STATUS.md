@@ -13,10 +13,11 @@ This checkpoint continues the existing `icpworld-onchain-upgrade` branch and the
 - Live URL: https://icpmemeworld-65u.caffeine.xyz
 - Last known Caffeine live/draft version: 66
 - Caffeine hosted builder: currently blocked by `out_of_credits`
+- Latest GitHub Actions run #28: passed both frontend and backend jobs
 
 ## Verified current state
 
-The current branch head at the time of this checkpoint was `5995742f1ba0115b4ee6d202232b65b2dbeaed89`.
+The implementation branch head before this status-document commit was `5995742f1ba0115b4ee6d202232b65b2dbeaed89`; the status-document commit is `f542b2078e8c43ff2042c33aea9da6675da0a153`.
 
 The draft PR describes these safety changes already present on the branch:
 - Read-only ICP Ledger balance lookup for a principal-derived account/subaccount.
@@ -25,7 +26,7 @@ The draft PR describes these safety changes already present on the branch:
 - ICPSwap is not presented as connected when no verified integration exists.
 - The current principal-derived deposit account is user-controlled, not a canister escrow account.
 
-The successful GitHub Actions run verifies frontend dependency installation, typecheck/build, and Motoko checks/build. It does not verify the deployed Caffeine canister's live state or production behavior.
+GitHub Actions run #28 (commit `f542b2078e8c43ff2042c33aea9da6675da0a153`) completed successfully: frontend dependency installation, TypeScript typecheck, frontend production build, Motoko stable-compatibility/type check, and Motoko backend compilation all passed. It does not verify the deployed Caffeine canister's live state or production behavior.
 
 ## Phase 1 blockers that remain
 
