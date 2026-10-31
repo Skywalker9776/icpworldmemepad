@@ -92,3 +92,19 @@ The current deposit address is derived from the user's own principal and subacco
 - Digital asset standards: https://docs.internetcomputer.org/references/digital-asset-standards
 - Wallet integration: https://docs.internetcomputer.org/guides/digital-assets/wallet-integration
 - Motoko persistence and upgrade documentation: https://docs.internetcomputer.org/motoko/fundamentals/actors/orthogonal-persistence
+
+
+## Additional frontend audit (2026-10-31)
+
+A follow-up inspection of `src/frontend/src/pages/SwapPage.tsx` and `CreateMemecoinPage.tsx` found user-visible simulation that must be removed before a public release:
+
+- SwapPage's `handleSwap` waits 1.5 seconds, appends a local "completed" swap-history item, and shows a success toast without submitting a DEX transaction.
+- The swap screen displays a hardcoded ICP price of 12.45 and synthetic percentage changes derived from token symbols; these are not live market data.
+- CreateMemecoinPage still presents a successful launch state with a fabricated contract-address string after the mutation callback. The backend now rejects token creation, so the UI must not imply that launch can succeed.
+- The create page's fee panel and safety checklist still make claims about a 2 ICP charge, ownership cap, auto-locked liquidity, and on-chain deployment that have not been implemented or verified.
+
+These are source-level findings from the development branch. The corresponding UI has not yet been changed or build-tested. The release runbook in `docs/CAFFEINE_BUILD_AND_PUBLISH_RUNBOOK.md` gives the safe hosted-builder workflow and a complete remediation prompt.
+
+## Deployment workflow clarification
+
+Caffeine's documented workflow distinguishes building a draft from publishing a live app. The CLI can build/check and upload a draft preview; publishing/promoting to the live URL is done in the Caffeine web app. The repository's `deploy.sh` runs a local ICP network and is not a production Caffeine deployment script. Do not describe a GitHub commit as a live deployment.
