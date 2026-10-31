@@ -26,19 +26,17 @@ import { toast } from "sonner";
 import { TransactionStatus, TransactionType } from "../backend";
 import type { OwnershipRecord, Transaction } from "../backend";
 import DepositAddressCard from "../components/DepositAddressCard";
-import DepositWithdrawDialog from "../components/DepositWithdrawDialog";
 import ReferralShareCard from "../components/ReferralShareCard";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useGetCallerWallet,
+  useGetVerifiedICPBalance,
   useGetDepositAddress,
   useGetMemecoins,
   useGetOwnershipRecords,
   useGetTransactionHistory,
   useIsCEO,
 } from "../hooks/useQueries";
-
-const ICP_USD_RATE = 12.5;
 
 function WalletSkeleton() {
   return (
@@ -134,6 +132,7 @@ function HoldingCard({
 export default function PortfolioPage() {
   const { identity } = useInternetIdentity();
   const { data: wallet, isLoading: walletLoading } = useGetCallerWallet();
+  const { data: verifiedICPBalance, isLoading: ledgerBalanceLoading, isError: ledgerBalanceError } = useGetVerifiedICPBalance();
   const { data: depositAddress = "", isLoading: depositAddressLoading } =
     useGetDepositAddress();
   const { data: ownershipRecords = [], isLoading: ownershipLoading } =
@@ -170,8 +169,8 @@ export default function PortfolioPage() {
     );
   }
 
-  const icpBalance = wallet ? Number(wallet.balance) / 100_000_000 : 0;
-  const icpUSD = (icpBalance * ICP_USD_RATE).toFixed(2);
+  const icpBalance = verifiedICPBalance !== undefined ? Number(verifiedICPBalance) / 100_000_000 : null;
+  const legacyAppBalance = wallet ? Number(wallet.balance) / 100_000_000 : 0;
 
   const getMemecoinName = (symbol: string) => {
     const coin = memecoins.find((c) => c.symbol === symbol);
@@ -222,49 +221,30 @@ export default function PortfolioPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Wallet className="h-5 w-5 text-primary" />
-                  ICP Balance
+                  Verified ICP Ledger Balance
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-end gap-3">
                   <span className="text-5xl font-bold text-foreground">
-                    {icpBalance.toFixed(4)}
+                    {ledgerBalanceLoading ? "…" : icpBalance === null ? "Unavailable" : icpBalance.toFixed(8)}
                   </span>
-                  <span className="text-2xl font-semibold text-primary mb-1">
-                    ICP
-                  </span>
+                  <span className="text-2xl font-semibold text-primary mb-1">ICP</span>
                 </div>
                 <p className="text-muted-foreground text-sm mt-1">
-                  ≈ ${icpUSD} USD
+                  {ledgerBalanceError
+                    ? "Could not retrieve the ICP Ledger balance. Please retry later."
+                    : "Read directly from the ICP Ledger for your deposit subaccount."}
                 </p>
-                <div className="flex gap-3 mt-4">
-                  <DepositWithdrawDialog
-                    type="icp"
-                    initialTab="deposit"
-                    depositAddress={depositAddress}
-                    trigger={
-                      <Button
-                        className="flex-1 gap-2 h-10 font-bold"
-                        data-ocid="deposit-btn"
-                      >
-                        <ArrowDownToLine className="h-4 w-4" /> Deposit ICP
-                      </Button>
-                    }
-                  />
-                  <DepositWithdrawDialog
-                    type="icp"
-                    initialTab="withdraw"
-                    depositAddress={depositAddress}
-                    trigger={
-                      <Button
-                        variant="outline"
-                        className="flex-1 gap-2 h-10 border-primary text-primary hover:bg-primary/10 font-bold"
-                        data-ocid="withdraw-btn"
-                      >
-                        <ArrowUpFromLine className="h-4 w-4" /> Withdraw
-                      </Button>
-                    }
-                  />
+                <div className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3 space-y-1">
+                  <p className="text-sm font-semibold text-yellow-500">Deposits and withdrawals are paused</p>
+                  <p className="text-xs text-muted-foreground">
+                    Deposit reconciliation and real Ledger withdrawals are not complete. Do not send ICP to the displayed address until deposits are enabled.
+                  </p>
+                </div>
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Legacy in-app accounting balance: <strong>{legacyAppBalance.toFixed(4)} ICP</strong>
+                  <br />This is not a verified on-chain balance and cannot be withdrawn as real ICP.
                 </div>
               </CardContent>
             </Card>
@@ -306,11 +286,19 @@ export default function PortfolioPage() {
             </Card>
           </div>
 
-          {/* Deposit Address Card */}
-          <DepositAddressCard
-            depositAddress={depositAddress}
-            isLoading={depositAddressLoading}
-          />
+          <Card className="border border-yellow-500/30">
+            <CardHeader>
+              <CardTitle className="text-base">Deposit address status</CardTitle>
+              <CardDescription>
+                This legacy address is displayed for reference only. Incoming transfers are not yet monitored or credited by the application. Please do not send ICP to it until deposit reconciliation is enabled.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="font-mono text-xs break-all text-muted-foreground">
+                {depositAddressLoading ? "Loading address…" : depositAddress || "Address unavailable"}
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Referral Link */}
           <ReferralShareCard />
