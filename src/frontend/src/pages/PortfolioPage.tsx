@@ -25,7 +25,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { TransactionStatus, TransactionType } from "../backend";
 import type { OwnershipRecord, Transaction } from "../backend";
-import DepositAddressCard from "../components/DepositAddressCard";
 import ReferralShareCard from "../components/ReferralShareCard";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
