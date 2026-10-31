@@ -82,5 +82,5 @@ The first delivery is a truthful, safe app with real read-only ledger balance vi
 
 - This ChatGPT session has GitHub access but no authenticated Caffeine project/build/publish control.
 - The owner's Caffeine project ID and the GitHub-to-Caffeine source relationship are not established here.
-- No successful build or live-canister verification has been obtained for the development branch.
+- Frontend typecheck/build and Motoko backend compilation pass in GitHub Actions; stable-state compatibility and live-canister verification remain outstanding.
 - Consequently, no live deployment or production upgrade is authorized or technically possible from this session alone.
