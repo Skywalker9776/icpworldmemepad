@@ -47,5 +47,7 @@ jobs:
         run: npm install --global ic-mops@3.5.1
       - name: Install pinned Motoko toolchain and packages
         run: mops install --locked
+      - name: Check Motoko types and stable compatibility
+        run: mops check backend
       - name: Compile Motoko backend
         run: mops build backend
