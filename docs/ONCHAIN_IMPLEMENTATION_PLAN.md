@@ -16,6 +16,27 @@ Production branch: `main` (untouched)
 
 These are source-inspection findings, not proof of live-canister state or a complete audit of every external service.
 
+## Current implementation status (2026-10-31)
+
+Implemented on the development branch:
+- Read-only ICP Ledger balance query for the same principal/subaccount used by the current deposit account.
+- Frontend hook and Portfolio display for the verified Ledger balance, separated from the legacy app accounting balance.
+- Frontend warning that deposit reconciliation and withdrawals are not enabled; users are told not to send ICP to the legacy address.
+- Generated frontend actor bindings updated for the new balance method.
+- Backend guards disable the old simulated withdrawal, token creation, trade approval, and internal-bookkeeping trade paths until real signer/ledger/token/DEX integrations exist.
+- ICPSwap connection status now reports disconnected rather than returning a false positive.
+
+Not implemented or not verified:
+- No deposit event/indexer reconciliation or automatic crediting.
+- No wallet signer integration or user-approved ICP transfer flow.
+- No ICRC token canister deployment or initial supply distribution.
+- No ICPSwap pool discovery, swap execution, or liquidity provision.
+- No successful Motoko build, frontend typecheck, or integration test has been run in this environment.
+- No Caffeine draft promotion, canister deployment, or mainnet verification has been performed.
+
+Important account model:
+The current deposit address is derived from the user's own principal and subaccount. It is not a canister-controlled escrow account. The application can read that ledger account's balance, but it cannot spend from it without the user's wallet signing. Keep this user-controlled model unless a separately audited, explicitly disclosed custody model is designed.
+
 ## Non-negotiable safety requirements
 
 1. Never represent an application database balance as a verified on-chain balance.
