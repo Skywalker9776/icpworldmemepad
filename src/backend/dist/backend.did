@@ -214,6 +214,7 @@ service : {
   getTradingFeeRate: () -> (nat) query;
   getTradingTransactions: () -> (vec TradingTransaction) query;
   getTransactionHistory: () -> (vec Transaction) query;
+  getVerifiedICPBalance: () -> (nat);
   getTrendingMemecoins: () -> (vec Memecoin) query;
   getUserProfile: (user: principal) -> (opt UserProfile) query;
   getWalletConnectionOptions: () -> (vec record {
