@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,12 +10,8 @@ import {
 import {
   AlertTriangle,
   ArrowDownUp,
-  CheckCircle2,
-  Clock,
   RefreshCw,
   Settings,
-  TrendingDown,
-  TrendingUp,
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -25,38 +20,6 @@ import type { Memecoin } from "../backend.d";
 import LoginOptionsDialog from "../components/LoginOptionsDialog";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetCallerWallet, useGetMemecoins } from "../hooks/useQueries";
-
-interface SwapHistoryItem {
-  from: string;
-  to: string;
-  fromAmount: string;
-  toAmount: string;
-  time: number;
-  status: "completed" | "pending";
-}
-
-function getTokenPrice(symbol: string): number {
-  if (symbol === "ICP") return 1;
-  const c = symbol.charCodeAt(0);
-  return 0.0001 + (c % 10) * 0.00005;
-}
-
-function calcOutput(
-  fromSymbol: string,
-  toSymbol: string,
-  amount: number,
-  slippage: number,
-): number {
-  const fromPrice = getTokenPrice(fromSymbol);
-  const toPrice = getTokenPrice(toSymbol);
-  const rate = fromPrice / toPrice;
-  return amount * rate * (1 - slippage / 100) * 0.998;
-}
-
-function calcPriceImpact(fromSymbol: string, amount: number): number {
-  if (fromSymbol === "ICP") return Math.min(amount * 0.05, 15);
-  return Math.min(amount * 0.001, 10);
-}
 
 export default function SwapPage() {
   const { identity } = useInternetIdentity();
@@ -67,28 +30,15 @@ export default function SwapPage() {
   const [fromAmount, setFromAmount] = useState("");
   const [slippage, setSlippage] = useState("0.5");
   const [showSettings, setShowSettings] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [swapHistory, setSwapHistory] = useState<SwapHistoryItem[]>([]);
   const [rotating, setRotating] = useState(false);
 
   const icpBalance = wallet ? Number(wallet.balance) / 100_000_000 : 0;
-  const outputAmount =
-    fromAmount && toToken
-      ? calcOutput(
-          fromToken,
-          toToken,
-          Number.parseFloat(fromAmount),
-          Number.parseFloat(slippage),
-        )
-      : 0;
-  const priceImpact = fromAmount
-    ? calcPriceImpact(fromToken, Number.parseFloat(fromAmount))
-    : 0;
-  const rate = toToken
-    ? (getTokenPrice(fromToken) / getTokenPrice(toToken)).toFixed(6)
-    : "0";
-  const minReceived = outputAmount * (1 - Number.parseFloat(slippage) / 100);
+  // Quotes remain unavailable until a live DEX quote source is integrated and validated.
+  const outputAmount = 0;
+  const priceImpact = 0;
+  const rate = "Unavailable";
+  const minReceived = 0;
 
   useEffect(() => {
     if (memecoins.length > 0 && !toToken) setToToken(memecoins[0].symbol);
@@ -105,39 +55,8 @@ export default function SwapPage() {
     }, 300);
   };
 
-  const handleSwap = async () => {
-    if (!fromToken || !toToken || !fromAmount) {
-      toast.error("Fill in all fields");
-      return;
-    }
-    if (Number.parseFloat(fromAmount) <= 0) {
-      toast.error("Amount must be greater than 0");
-      return;
-    }
-    if (priceImpact > 10) {
-      toast.warning("High price impact! Proceed with caution.");
-    }
-    setLoading(true);
-    try {
-      await new Promise((r) => setTimeout(r, 1500));
-      const item: SwapHistoryItem = {
-        from: fromToken,
-        to: toToken,
-        fromAmount,
-        toAmount: outputAmount.toFixed(6),
-        time: Date.now(),
-        status: "completed",
-      };
-      setSwapHistory((prev) => [item, ...prev.slice(0, 9)]);
-      toast.success(
-        `✅ Swapped ${fromAmount} ${fromToken} → ${outputAmount.toFixed(6)} ${toToken}`,
-      );
-      setFromAmount("");
-    } catch {
-      toast.error("Swap failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  const handleSwap = () => {
+    toast.error("Swaps are not available yet. No transaction was submitted.");
   };
 
   const allTokens = [
@@ -191,15 +110,14 @@ export default function SwapPage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30 mb-4">
             <Zap className="w-4 h-4 text-green-400" />
             <span className="text-green-400 text-sm font-bold">
-              Lightning Fast Swap — ICP Blockchain
+              DEX integration pending
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
             Instant Swap
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Trade any token instantly with optimal routing, adjustable slippage,
-            and real-time price feeds on the Internet Computer.
+            Swap functionality will be enabled after real DEX routing, verified quotes, and transaction confirmation are integrated.
           </p>
         </div>
 
@@ -429,7 +347,7 @@ export default function SwapPage() {
 
               <Button
                 onClick={handleSwap}
-                disabled={!fromToken || !toToken || !fromAmount || loading}
+                disabled
                 className="w-full h-14 text-lg font-bold bg-green-500/20 border border-green-500 text-green-400 hover:bg-green-500/30 transition-all disabled:opacity-50"
                 style={{ boxShadow: "0 0 20px rgba(0,230,118,0.2)" }}
                 data-ocid="swap-submit-btn"
@@ -442,83 +360,26 @@ export default function SwapPage() {
                 ) : (
                   <span className="flex items-center gap-2">
                     <Zap className="w-5 h-5" />
-                    Swap {fromToken} → {toToken || "?"}
+                    Swaps unavailable
                   </span>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* Sidebar: Stats + History */}
+          {/* Honest status: no fabricated prices, changes, or swap history. */}
           <div className="space-y-4">
-            {/* Price cards */}
-            {[
-              { symbol: "ICP", price: 12.45, change: 3.2 },
-              ...memecoins.slice(0, 3).map((c) => ({
-                symbol: c.symbol,
-                price: getTokenPrice(c.symbol),
-                change: (c.symbol.charCodeAt(0) % 20) - 10,
-              })),
-            ].map((token) => (
-              <div
-                key={token.symbol}
-                className="bg-card border border-border rounded-xl p-4"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-foreground">{token.symbol}</p>
-                    <p className="text-lg font-bold text-primary">
-                      {token.price < 1
-                        ? token.price.toFixed(6)
-                        : token.price.toFixed(2)}{" "}
-                      ICP
-                    </p>
-                  </div>
-                  <Badge
-                    className={`${token.change >= 0 ? "bg-green-500/20 text-green-400 border-green-500/50" : "bg-red-500/20 text-red-400 border-red-500/50"}`}
-                  >
-                    {token.change >= 0 ? (
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                    ) : (
-                      <TrendingDown className="w-3 h-3 mr-1" />
-                    )}
-                    {token.change >= 0 ? "+" : ""}
-                    {token.change.toFixed(1)}%
-                  </Badge>
-                </div>
+            <div className="bg-card border border-yellow-500/30 rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                <AlertTriangle className="w-5 h-5" />
+                DEX integration unavailable
               </div>
-            ))}
-
-            {/* Swap history */}
-            <div className="bg-card border border-border rounded-xl p-4">
-              <h3 className="font-bold text-foreground mb-3 text-sm">
-                Recent Swaps
-              </h3>
-              {swapHistory.length === 0 ? (
-                <p className="text-muted-foreground text-xs text-center py-4">
-                  Your swap history will appear here
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {swapHistory.map((h, i) => (
-                    <div
-                      key={`swap-${h.time}-${i}`}
-                      className="flex items-center gap-2 text-xs border-b border-border/30 pb-2"
-                    >
-                      <CheckCircle2 className="w-3 h-3 text-green-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-foreground font-medium truncate">
-                          {h.fromAmount} {h.from} → {h.toAmount} {h.to}
-                        </p>
-                        <p className="text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-2.5 h-2.5" />
-                          {new Date(h.time).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p className="text-sm text-muted-foreground">
+                Live quotes, price impact, network fees, swaps, and transaction history are unavailable until a real ICP DEX integration is connected and tested.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                No swap will be submitted and no funds will be moved from this screen.
+              </p>
             </div>
           </div>
         </div>
