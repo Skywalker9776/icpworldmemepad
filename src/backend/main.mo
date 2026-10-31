@@ -18,6 +18,13 @@ import Stripe "mo:caffeineai-stripe/stripe";
 
 
 actor {
+    // ── Read-only ICP Ledger integration ─────────────────────────────────────────
+    // The ICP Ledger is the source of truth for native ICP balances.
+    type ICPAccount = { owner : Principal; subaccount : ?Blob };
+    let icpLedger = actor ("ryjl3-tyaaa-aaaaa-aaaba-cai") : actor {
+        icrc1_balance_of : shared query (ICPAccount) -> async Nat;
+    };
+
     // ── Blob storage ─────────────────────────────────────────────────────────────
     include MixinObjectStorage();
 
@@ -178,6 +185,16 @@ actor {
      };
 
      // Get or compute and cache a user's deposit address
+     // Recreate the exact subaccount used by computeDepositAddress.
+     // ICRC-1 represents this account as the caller principal plus this subaccount.
+     func computeDepositSubaccount(user : Principal) : Blob {
+         let principalBytes = user.toBlob().toArray();
+         let subaccountBytes = Array.tabulate<Nat8>(32, func(i) {
+             if (i < principalBytes.size()) principalBytes[i] else 0
+         });
+         Blob.fromArray(subaccountBytes);
+     };
+
      func getOrCreateDepositAddress(user : Principal) : Text {
          switch (depositAddresses.get(user)) {
              case (?addr) addr;
@@ -400,6 +417,21 @@ actor {
         requireNonAnon(caller);
         if (not AccessControl.hasPermission(accessControlState, caller, #user)) Runtime.trap("Unauthorized");
         getOrCreateDepositAddress(caller);
+    };
+
+    // Reads the actual ICP Ledger balance for the exact account used by this user's
+    // deposit address. It does not credit or mutate the app's legacy wallet balance.
+    public shared ({ caller }) func getVerifiedICPBalance() : async Nat {
+        requireACInit();
+        requireNonAnon(caller);
+        if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+            Runtime.trap("Unauthorized");
+        };
+        let subaccount = computeDepositSubaccount(caller);
+        await icpLedger.icrc1_balance_of({
+            owner = caller;
+            subaccount = ?subaccount;
+        });
     };
 
     public query ({ caller }) func getTransactionHistory() : async [Transaction] {
