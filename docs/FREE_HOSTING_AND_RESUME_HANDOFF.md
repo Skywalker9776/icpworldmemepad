@@ -60,3 +60,17 @@ A privileged Caffeine admin URL/token was previously exposed in conversation his
 ## Release status
 
 **NOT READY FOR PRODUCTION.** This file is the durable resume point. No production deployment, canister upgrade, controller change, data migration, funds movement, token launch, or DEX transaction was performed for this checkpoint.
+
+
+## Latest continuation check (2026-10-31)
+
+- GitHub Actions run #32 for the handoff commit completed successfully; both `frontend` and `backend` jobs report success. This confirms the repository still builds and typechecks, not that it is deployed or that live transactions work.
+- The existing Caffeine project remains active at `https://icpmemeworld-65u.caffeine.xyz`; its last known live/draft version remains 66. The existing draft URL is `https://varying-aqua-3y7-draft.caffeine.xyz`. No new Caffeine build or go-live was requested.
+- Rechecked `src/frontend/env.json` on both the development branch and `main`: all four deployment fields remain `undefined`. A Cloudflare Pages or GitHub Pages build with this config would not constitute a working ICP dapp, so no public alternate deployment was triggered.
+- Rechecked backend initialization code: `initializeAccessControl()` currently initializes access control using its first non-anonymous caller. This is a critical first-caller-admin risk. It must not be called on a live canister or deployed as-is. A legitimate owner principal and safe initialization design must be established first.
+- Cloudflare Pages Git integration supports GitHub-triggered deployments and branch previews; its production branch setting determines what becomes production. Use the official documented Git integration flow only after runtime configuration and backend safety are fixed.
+- GitHub Pages requires Pages to be enabled in repository Settings with GitHub Actions as the source. That setting cannot be safely assumed or silently changed here.
+
+## Current stop condition
+
+Do not attempt a live alternate-host deployment merely to obtain a URL. Until valid canister/environment values and a safe owner bootstrap are available, any public static build would be a nonfunctional or unsafe shell. Keep the existing live Caffeine app untouched, keep PR #1 draft, and continue with offline/code-level remediation and test planning only.
