@@ -143,6 +143,27 @@ export function useGetDepositAddress() {
   };
 }
 
+// ─── Verified ICP Ledger Balance ─────────────────────────────────────────────
+// Read-only ledger value. This is deliberately separate from legacy app accounting.
+export function useGetVerifiedICPBalance() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<bigint>({
+    queryKey: ["verifiedICPBalance"],
+    queryFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      const ledgerActor = actor as typeof actor & {
+        getVerifiedICPBalance: () => Promise<bigint>;
+      };
+      return ledgerActor.getVerifiedICPBalance();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 15000,
+    staleTime: 5000,
+    retry: 2,
+  });
+}
+
 // ─── Transaction History ───────────────────────────────────────────────────
 
 export function useGetTransactionHistory() {
