@@ -10,7 +10,6 @@ import {
 import {
   AlertTriangle,
   ArrowDownUp,
-  RefreshCw,
   Settings,
   Zap,
 } from "lucide-react";
@@ -352,17 +351,10 @@ export default function SwapPage() {
                 style={{ boxShadow: "0 0 20px rgba(0,230,118,0.2)" }}
                 data-ocid="swap-submit-btn"
               >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                    Swapping...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Zap className="w-5 h-5" />
-                    Swaps unavailable
-                  </span>
-                )}
+                <span className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  Swaps unavailable
+                </span>
               </Button>
             </div>
           </div>
