@@ -33,7 +33,7 @@ Not implemented or not verified:
 - No ICPSwap pool discovery, swap execution, or liquidity provision.
 - Frontend TypeScript typecheck and production build pass in GitHub Actions.
 - Motoko backend compiles successfully with the pinned Mops toolchain in GitHub Actions.
-- No stable-state compatibility check is available because the configured baseline `.old/src/backend/dist/backend.most` is absent from the repository.
+- A previous compiled `.most` snapshot from the untouched `main` branch has been restored at the configured `.old/src/backend/dist/backend.most` path. CI now runs `mops check backend` before building. This is a repository baseline, not independently verified against the live canister's actual deployed stable state or controller metadata.
 - No live-canister verification or end-to-end integration test has been performed.
 - No Caffeine draft promotion, canister deployment, or mainnet verification has been performed.
 
