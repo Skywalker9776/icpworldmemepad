@@ -80,7 +80,7 @@ The first delivery is a truthful, safe app with real read-only ledger balance vi
 
 ## Current blockers outside this repository
 
-- This ChatGPT session has GitHub access but no authenticated Caffeine project/build/publish control.
+- The Caffeine connection is authenticated and the existing project metadata is readable. However, a hosted Caffeine build attempt was rejected with `out_of_credits`; no new draft can currently be built or published through that path.
 - The owner's Caffeine project ID and the GitHub-to-Caffeine source relationship are not established here.
 - Frontend typecheck/build and Motoko backend compilation pass in GitHub Actions. The CI workflow now runs `mops check backend` against a previous compiled `.most` snapshot copied from `main`; this verifies source-to-snapshot compatibility, but the snapshot has not been independently verified against the live canister's actual deployed state. Live canister identity/controller verification remains outstanding.
 - Consequently, no live deployment or production upgrade is authorized or technically possible from this session alone.
