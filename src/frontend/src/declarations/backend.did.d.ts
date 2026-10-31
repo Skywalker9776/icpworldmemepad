@@ -204,6 +204,7 @@ export interface _SERVICE {
   'getTradingTransactions' : ActorMethod<[], Array<TradingTransaction>>,
   'getTransactionHistory' : ActorMethod<[], Array<Transaction>>,
   'getTrendingMemecoins' : ActorMethod<[], Array<Memecoin>>,
+  'getVerifiedICPBalance' : ActorMethod<[], bigint>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getWalletConnectionOptions' : ActorMethod<[], Array<[string, boolean]>>,
   'initializeAccessControl' : ActorMethod<[], undefined>,
