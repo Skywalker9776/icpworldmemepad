@@ -11,7 +11,7 @@ Production branch: `main` (untouched)
 - `withdrawICP` deducts the application-maintained balance and creates a pending history record. The inspected function does not call `icrc1_transfer`.
 - `createMemecoin` stores a `Memecoin` record and changes the application-maintained wallet balance for the creation fee. The inspected function does not deploy or register a token ledger.
 - `getHotMemecoins`, `getTrendingMemecoins`, `getNewMemecoins`, and `getProgressingMemecoins` each return the first ten stored records rather than calculating a market ranking.
-- Access-control initialization assigns the first non-anonymous caller as the initial administrator/CEO. The initialization process and live canister state must be verified before changing it.
+- The project uses Caffeine's `MixinAuthorization` plus a custom `initializeAccessControl` method that assigns its first non-anonymous caller as CEO. Caffeine's authorization extension documentation also describes first authenticated sign-in as the automatic admin bootstrap. This is safe only if the legitimate owner was the first authenticated user; the live role/CEO state and first-login identity are not verifiable from the repository. Do not change or reset roles until the deployed state and owner principal are independently verified.
 - The frontend dependency manifest currently contains both legacy `@dfinity/*` packages and `@icp-sdk/core`; signer integration must be aligned with the actual installed SDK versions before implementation.
 
 These are source-inspection findings, not proof of live-canister state or a complete audit of every external service.
