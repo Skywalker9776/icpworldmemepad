@@ -183,15 +183,7 @@ export default function SwapPage() {
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-muted-foreground">From</span>
                   <span className="text-xs text-muted-foreground">
-                    Balance:{" "}
-                    <button
-                      type="button"
-                      className="text-primary hover:underline"
-                      onClick={() => setFromAmount(icpBalance.toFixed(4))}
-                    >
-                      {fromToken === "ICP" ? icpBalance.toFixed(4) : "0"}{" "}
-                      {fromToken}
-                    </button>
+                    Trading disabled
                   </span>
                 </div>
                 <div className="flex gap-3 items-center">
@@ -230,18 +222,6 @@ export default function SwapPage() {
                   />
                 </div>
                 <div className="flex gap-2 mt-2">
-                  {[25, 50, 75, 100].map((pct) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() =>
-                        setFromAmount(((icpBalance * pct) / 100).toFixed(4))
-                      }
-                      className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                    >
-                      {pct}%
-                    </button>
-                  ))}
                 </div>
               </div>
 
@@ -269,7 +249,7 @@ export default function SwapPage() {
                     To (estimated)
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Min: {minReceived.toFixed(6)} {toToken}
+                    Minimum received: unavailable
                   </span>
                 </div>
                 <div className="flex gap-3 items-center">
@@ -293,7 +273,7 @@ export default function SwapPage() {
                     <span
                       className={`text-xl font-bold ${outputAmount > 0 ? "text-green-400" : "text-muted-foreground"}`}
                     >
-                      {outputAmount > 0 ? outputAmount.toFixed(6) : "0.0"}
+                      Quote unavailable
                     </span>
                   </div>
                 </div>
