@@ -152,7 +152,7 @@ export function useGetVerifiedICPBalance() {
     queryKey: ["verifiedICPBalance"],
     queryFn: async () => {
       if (!actor) throw new Error("Actor not available");
-      const ledgerActor = actor as typeof actor & {
+      const ledgerActor = actor as {
         getVerifiedICPBalance: () => Promise<bigint>;
       };
       return ledgerActor.getVerifiedICPBalance();
