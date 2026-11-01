@@ -63,3 +63,12 @@ Release requirement: clearly label this as a user-controlled ledger account unle
 ## Current status
 
 **NOT READY FOR PRODUCTION.** The existing Caffeine app and draft PR should be preserved. Static hosting alone does not make the backend live or implement the missing on-chain transaction paths.
+
+## CI verification update (2026-11-01)
+
+GitHub Actions run **41271730583** for commit `eba8c92f36830ed3c99224fb50053c1ec73ad9d5` completed successfully.
+
+- Frontend job: dependency installation, frontend typecheck, and frontend build all passed.
+- Backend job: pinned Motoko toolchain/package installation, Motoko type and stable-compatibility checks, and backend compilation all passed.
+
+This is useful source-level CI evidence, but it does **not** verify live canister IDs/controllers, runtime environment configuration, admin bootstrap safety, Internet Identity origin, ledger deposits/withdrawals, token deployment, DEX swaps, or production behavior. The release status therefore remains **NOT READY FOR PRODUCTION** until the release gates above are closed.
