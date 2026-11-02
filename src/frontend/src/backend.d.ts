@@ -188,6 +188,7 @@ export interface backendInterface {
     getTradingTransactions(): Promise<Array<TradingTransaction>>;
     getTransactionHistory(): Promise<Array<Transaction>>;
     getTrendingMemecoins(): Promise<Array<Memecoin>>;
+    getVerifiedICPBalance(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getWalletConnectionOptions(): Promise<Array<[string, boolean]>>;
     initializeAccessControl(): Promise<void>;

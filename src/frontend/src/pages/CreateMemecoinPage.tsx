@@ -35,7 +35,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalBlob } from "../backend";
 import {
   useCreateMemecoin,
   useGetCallerWallet,
@@ -406,31 +405,9 @@ export default function CreateMemecoinPage() {
   const step2Valid = supplyVal >= 100 && lockDuration;
 
   const handleLaunch = async () => {
-    if (!logoFile) return;
-    const arrayBuffer = await logoFile.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const logo =
-      ExternalBlob.fromBytes(uint8Array).withUploadProgress(setUploadProgress);
-
-    createMemecoin.mutate(
-      {
-        name,
-        symbol: symbol.toUpperCase(),
-        description,
-        totalSupply: totalSupplyBig,
-        logo,
-        lockDuration: BigInt(lockDuration),
-        category,
-      },
-      {
-        onSuccess: () => {
-          const addr = `${symbol.toLowerCase()}-${Date.now().toString(16)}-icp`;
-          setContractAddress(addr);
-          setShowConfetti(true);
-          setLaunchSuccess(true);
-          setTimeout(() => setShowConfetti(false), 5000);
-        },
-      },
+    setUploadProgress(0);
+    window.alert(
+      "Token launch is not available yet. Real ICRC token-canister creation and verified deployment are not integrated. No fee was collected and no token was deployed.",
     );
   };
 
@@ -1389,97 +1366,21 @@ export default function CreateMemecoinPage() {
                 </div>
               </div>
 
-              {/* Safety Checklist */}
-              <div className="border border-[#228B22]/40 bg-[#228B22]/10 rounded-xl p-4 space-y-2">
-                <p className="text-sm font-bold text-[#228B22] flex items-center gap-2">
-                  <Shield className="w-4 h-4" /> Safety Checklist
+              {/* Implementation status: these protections are not yet on-chain. */}
+              <div className="border border-yellow-500/40 bg-yellow-500/10 rounded-xl p-4 space-y-2">
+                <p className="text-sm font-bold text-yellow-400 flex items-center gap-2">
+                  <Shield className="w-4 h-4" /> Launch safeguards: pending implementation
                 </p>
-                {[
-                  "✅ Fair Mode verified — name is unique",
-                  "✅ Ownership cap enforced — max 30% per holder",
-                  "✅ 20% liquidity auto-locked on launch",
-                  "✅ ICP on-chain deployment via Internet Computer",
-                  "✅ Anti-scam indicators pre-checked",
-                ].map((item) => (
-                  <p key={item} className="text-xs text-foreground">
-                    {item}
-                  </p>
-                ))}
+                <p className="text-xs text-foreground">Token-canister deployment, holder limits, liquidity locking, and on-chain anti-scam checks have not been implemented or independently verified.</p>
+                <p className="text-xs text-muted-foreground">This page currently collects token details for preview only. It does not create a token.</p>
               </div>
 
-              {/* Fee Display */}
-              <div
-                className={`rounded-xl p-5 border-2 ${isCEO ? "border-[#B8860B] bg-gradient-to-r from-[#B8860B]/20 to-[#4B0082]/15" : "border-border bg-muted/30"}`}
-              >
-                {isCEO ? (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Crown className="w-6 h-6 text-[#B8860B]" />
-                      <div>
-                        <p className="font-bold text-[#B8860B]">
-                          🎖️ CEO Privilege Active
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Lifetime free memecoin creation
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground line-through">
-                        2 ICP
-                      </p>
-                      <p className="text-2xl font-bold text-[#B8860B]">FREE</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="font-bold text-foreground">Creation Fee</p>
-                      <p
-                        className="text-2xl font-bold"
-                        style={{ color: "#DC143C" }}
-                      >
-                        2 ICP
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Your Wallet Balance
-                      </span>
-                      <span
-                        className={`font-bold ${hasFunds ? "text-[#228B22]" : "text-[#DC143C]"}`}
-                      >
-                        {walletBalance.toFixed(4)} ICP
-                      </span>
-                    </div>
-                    {!hasFunds && (
-                      <div className="mt-3 p-3 rounded-lg bg-[#DC143C]/10 border border-[#DC143C]/50 space-y-1">
-                        <p className="text-xs text-[#DC143C] flex items-center gap-1 font-bold">
-                          <X className="w-3 h-3 shrink-0" /> Insufficient
-                          balance. You need 2 ICP to create a memecoin.
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Please{" "}
-                          <button
-                            type="button"
-                            onClick={() => navigate({ to: "/portfolio" })}
-                            className="underline text-[#B8860B] hover:text-[#DC143C] transition-colors font-bold"
-                            data-ocid="insufficient-balance-deposit-link"
-                          >
-                            deposit ICP
-                          </button>{" "}
-                          to your wallet first.
-                        </p>
-                      </div>
-                    )}
-                    {officialDepositAddresses.length > 0 && (
-                      <div className="pt-2 border-t border-border text-xs text-muted-foreground">
-                        Fee routed to official CEO wallets for platform
-                        sustainability.
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* No fee is charged while token creation is unavailable. */}
+              <div className="rounded-xl p-5 border border-yellow-500/40 bg-yellow-500/10 space-y-2">
+                <p className="font-bold text-yellow-400">Token launch disabled</p>
+                <p className="text-sm text-foreground">No creation fee is currently payable. The previously displayed 2 ICP fee and CEO exemption are not active payment rules.</p>
+                <p className="text-xs text-muted-foreground">Your displayed internal wallet balance is ${walletBalance.toFixed(4)} ICP. It is not a verified deposit and must not be used to imply funds are available for launch.</p>
+                <p className="text-xs text-muted-foreground">{isCEO ? "Administrator status does not enable token deployment." : "Token creation will be enabled after real ICRC deployment and payment verification are implemented."}</p>
               </div>
 
               {/* Upload progress */}
@@ -1509,19 +1410,19 @@ export default function CreateMemecoinPage() {
               </Button>
               <Button
                 onClick={handleLaunch}
-                disabled={createMemecoin.isPending || (!isCEO && !hasFunds)}
+                disabled
                 className="flex-1 h-14 font-bold text-lg btn-blazing text-black border-0 gap-3"
                 data-ocid="btn-launch-memecoin"
               >
                 {createMemecoin.isPending ? (
                   <>
                     <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />{" "}
-                    Launching on ICP...
+                    Launch unavailable
                   </>
                 ) : (
                   <>
                     <Rocket className="w-6 h-6" />{" "}
-                    {isCEO ? "🎖️ Launch FREE (CEO)" : "Launch Memecoin — 2 ICP"}
+                    Token launch unavailable
                   </>
                 )}
               </Button>

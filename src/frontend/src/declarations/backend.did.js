@@ -527,6 +527,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getTransactionHistory' : IDL.Func([], [IDL.Vec(Transaction)], ['query']),
     'getTrendingMemecoins' : IDL.Func([], [IDL.Vec(Memecoin)], ['query']),
+    'getVerifiedICPBalance' : IDL.Func([], [IDL.Nat], []),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],

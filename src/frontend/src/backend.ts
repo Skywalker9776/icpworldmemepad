@@ -280,6 +280,7 @@ export interface backendInterface {
     getTradingFeeRate(): Promise<bigint>;
     getTradingTransactions(): Promise<Array<TradingTransaction>>;
     getTransactionHistory(): Promise<Array<Transaction>>;
+    getVerifiedICPBalance(): Promise<bigint>;
     getTrendingMemecoins(): Promise<Array<Memecoin>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getWalletConnectionOptions(): Promise<Array<[string, boolean]>>;
@@ -943,6 +944,17 @@ export class Backend implements backendInterface {
             const result = await this.actor.getTradingTransactions();
             return result;
         }
+    }
+    async getVerifiedICPBalance(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                return await this.actor.getVerifiedICPBalance();
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        }
+        return await this.actor.getVerifiedICPBalance();
     }
     async getTransactionHistory(): Promise<Array<Transaction>> {
         if (this.processError) {

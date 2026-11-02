@@ -1,0 +1,53 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - icpworld-onchain-upgrade
+  pull_request:
+    branches:
+      - main
+      - icpworld-onchain-upgrade
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck frontend
+        run: pnpm --filter @caffeine/template-frontend typecheck
+      - name: Build frontend
+        run: pnpm --filter @caffeine/template-frontend build
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Mops
+        run: npm install --global ic-mops@3.5.1
+      - name: Install pinned Motoko toolchain and packages
+        run: mops install --locked
+      - name: Check Motoko types and stable compatibility
+        run: mops check backend
+      - name: Compile Motoko backend
+        run: mops build backend

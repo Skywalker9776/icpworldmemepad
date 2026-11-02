@@ -18,6 +18,13 @@ import Stripe "mo:caffeineai-stripe/stripe";
 
 
 actor {
+    // ── Read-only ICP Ledger integration ─────────────────────────────────────────
+    // The ICP Ledger is the source of truth for native ICP balances.
+    type ICPAccount = { owner : Principal; subaccount : ?Blob };
+    let icpLedger = actor ("ryjl3-tyaaa-aaaaa-aaaba-cai") : actor {
+        icrc1_balance_of : shared query (ICPAccount) -> async Nat;
+    };
+
     // ── Blob storage ─────────────────────────────────────────────────────────────
     include MixinObjectStorage();
 
@@ -178,6 +185,16 @@ actor {
      };
 
      // Get or compute and cache a user's deposit address
+     // Recreate the exact subaccount used by computeDepositAddress.
+     // ICRC-1 represents this account as the caller principal plus this subaccount.
+     func computeDepositSubaccount(user : Principal) : Blob {
+         let principalBytes = user.toBlob().toArray();
+         let subaccountBytes = Array.tabulate<Nat8>(32, func(i) {
+             if (i < principalBytes.size()) principalBytes[i] else 0
+         });
+         Blob.fromArray(subaccountBytes);
+     };
+
      func getOrCreateDepositAddress(user : Principal) : Text {
          switch (depositAddresses.get(user)) {
              case (?addr) addr;
@@ -402,6 +419,21 @@ actor {
         getOrCreateDepositAddress(caller);
     };
 
+    // Reads the actual ICP Ledger balance for the exact account used by this user's
+    // deposit address. It does not credit or mutate the app's legacy wallet balance.
+    public shared ({ caller }) func getVerifiedICPBalance() : async Nat {
+        requireACInit();
+        requireNonAnon(caller);
+        if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+            Runtime.trap("Unauthorized");
+        };
+        let subaccount = computeDepositSubaccount(caller);
+        await icpLedger.icrc1_balance_of({
+            owner = caller;
+            subaccount = ?subaccount;
+        });
+    };
+
     public query ({ caller }) func getTransactionHistory() : async [Transaction] {
         requireACInit();
         requireNonAnon(caller);
@@ -410,28 +442,10 @@ actor {
     };
 
     public shared ({ caller }) func withdrawICP(amount : Nat, destinationAddress : Text) : async Text {
-        requireACInit();
-        requireNonAnon(caller);
-        if (not AccessControl.hasPermission(accessControlState, caller, #user)) Runtime.trap("Unauthorized");
-        if (amount == 0) Runtime.trap("Amount must be > 0");
-        if (destinationAddress == "") Runtime.trap("Destination address required");
-        switch (wallets.get(caller)) {
-            case null Runtime.trap("Wallet not found");
-            case (?w) {
-                if (w.balance < amount) Runtime.trap("Insufficient balance");
-                wallets.add(caller, { w with balance = Nat.sub(w.balance, amount) });
-                let txId = debug_show(Time.now());
-                let tx : Transaction = {
-                    id = txId; user = caller; amount; status = #pending;
-                    transactionType = #withdrawal; timestamp = Time.now();
-                    memecoin = null; destinationAddress = ?destinationAddress;
-                    confirmationDetails = null;
-                };
-                let prev = switch (transactions.get(caller)) { case null []; case (?t) t };
-                transactions.add(caller, cat(prev, [tx]));
-                txId;
-            };
-        };
+        ignore caller;
+        ignore amount;
+        ignore destinationAddress;
+        Runtime.trap("Real ICP withdrawals are not enabled yet. No funds were moved. Use your own wallet until wallet-signed withdrawals are released.");
     };
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -447,73 +461,15 @@ actor {
         lockDuration : Nat,
         category : Text,
     ) : async () {
-        requireACInit();
-        requireNonAnon(caller);
-        if (not AccessControl.hasPermission(accessControlState, caller, #user)) Runtime.trap("Unauthorized");
-        if (not hasProfile(caller)) Runtime.trap("Complete your profile first");
-        let ceoUser = isCEOCheck(caller);
-        if (not ceoUser) {
-            switch (memecoinCreationAttempts.get(caller)) {
-                case (?last) {
-                    if (Time.now() - last < 60_000_000_000) Runtime.trap("Rate limit exceeded");
-                };
-                case null {};
-            };
-        };
-        memecoinCreationAttempts.add(caller, Time.now());
-        if (name == "" or symbol == "" or description == "") Runtime.trap("Fields required");
-        if (name.size() > 100 or symbol.size() > 20 or description.size() > 1000) Runtime.trap("Input too long");
-        if (totalSupply < 100 or totalSupply > 1_000_000_000_000_000) Runtime.trap("Invalid total supply");
-        if (lockDuration < 1 or lockDuration > 120) Runtime.trap("Lock duration 1-120 months");
-        // Fair Mode: prevent duplicate names (case-insensitive)
-        let nameLow = name.toLower();
-        switch (memecoinNames.get(nameLow)) {
-            case (?_) Runtime.trap("A memecoin with this name already exists (Fair Mode)");
-            case null {};
-        };
-        switch (memecoins.get(symbol)) {
-            case (?_) Runtime.trap("Memecoin symbol already exists");
-            case null {};
-        };
-        // Validate category
-        let resolvedCategory = if (isValidCategory(category)) category else "Future Tech";
-        // CEO gets free creation; others pay 2 ICP (200_000_000 e8s)
-        if (not ceoUser) {
-            switch (wallets.get(caller)) {
-                case null Runtime.trap("Wallet not found. Save your profile first.");
-                case (?w) {
-                    if (w.balance < 200_000_000) Runtime.trap("Insufficient balance: 2 ICP required");
-                    wallets.add(caller, { w with balance = Nat.sub(w.balance, 200_000_000) });
-                };
-            };
-        };
-        let liquidityLock : LiquidityLock = {
-            amount = Nat.div(totalSupply * 20, 100);
-            duration = lockDuration;
-            unlockDate = Time.now() + (lockDuration * 30 * 24 * 60 * 60 * 1_000_000_000);
-            isLocked = true;
-        };
-        memecoins.add(symbol, {
-            name; symbol; description; totalSupply;
-            creator = caller; createdAt = Time.now(); logo; liquidityLock;
-            category = resolvedCategory;
-        });
-        memecoinNames.add(nameLow, symbol);
-        if (not ceoUser) {
-            // Route 1 ICP (100_000_000 e8s) to each CEO wallet = 2 ICP total
-            let prev = switch (feeRecords.get(symbol)) { case null []; case (?f) f };
-            feeRecords.add(symbol, cat(cat(prev, [{
-                user = caller; amount = 100_000_000;
-                timestamp = Time.now(); depositAddress = officialDepositAddress1;
-            }]), [{
-                user = caller; amount = 100_000_000;
-                timestamp = Time.now(); depositAddress = officialDepositAddress2;
-            }]));
-        };
-        ownershipRecords.add(caller.toText() # "-" # symbol, {
-            owner = caller; memecoin = symbol;
-            amount = Nat.div(totalSupply * 30, 100); percentage = 30;
-        });
+        ignore caller;
+        ignore name;
+        ignore symbol;
+        ignore description;
+        ignore totalSupply;
+        ignore logo;
+        ignore lockDuration;
+        ignore category;
+        Runtime.trap("On-chain ICRC token deployment is not configured yet. This app cannot launch a real token or charge a creation fee yet.");
     };
 
     public query func getMemecoins() : async [Memecoin] {
@@ -554,90 +510,21 @@ actor {
     // ══════════════════════════════════════════════════════════════════════════════
 
     public shared ({ caller }) func approveTrade(memecoin : Text, buyer : Principal, amount : Nat, price : Nat) : async () {
-        requireACInit();
-        requireNonAnon(caller);
-        requireNonAnon(buyer);
-        if (not AccessControl.hasPermission(accessControlState, caller, #user)) Runtime.trap("Unauthorized");
-        if (not hasProfile(caller)) Runtime.trap("Complete your profile first");
-        if (Principal.equal(caller, buyer)) Runtime.trap("Cannot approve trade with yourself");
-        if (amount == 0 or price == 0) Runtime.trap("Amount and price must be > 0");
-        if (ownerAmt(caller, memecoin) < amount) Runtime.trap("Insufficient balance");
-        tradeApprovals.add(caller.toText() # "-" # buyer.toText() # "-" # memecoin, {
-            seller = caller; buyer; memecoin; amount; price;
-            expiresAt = Time.now() + 3_600_000_000_000;
-        });
+        ignore caller;
+        ignore memecoin;
+        ignore buyer;
+        ignore amount;
+        ignore price;
+        Runtime.trap("Real ICRC token trading is not enabled. No off-chain trade approvals are accepted.");
     };
 
     public shared ({ caller }) func tradeMemecoin(memecoin : Text, amount : Nat, price : Nat, seller : Principal) : async () {
-        requireACInit();
-        requireNonAnon(caller);
-        requireNonAnon(seller);
-        if (not AccessControl.hasPermission(accessControlState, caller, #user)) Runtime.trap("Unauthorized");
-        if (not hasProfile(caller)) Runtime.trap("Complete your profile first");
-        if (Principal.equal(caller, seller)) Runtime.trap("Cannot trade with yourself");
-        if (amount == 0 or price == 0) Runtime.trap("Amount and price > 0 required");
-        let ceoUser = isCEOCheck(caller);
-        if (not ceoUser) {
-            switch (tradeAttempts.get(caller)) {
-                case (?last) {
-                    if (Time.now() - last < 10_000_000_000) Runtime.trap("Rate limit: wait before trading");
-                };
-                case null {};
-            };
-        };
-        tradeAttempts.add(caller, Time.now());
-        let approvalKey = seller.toText() # "-" # caller.toText() # "-" # memecoin;
-        switch (tradeApprovals.get(approvalKey)) {
-            case null Runtime.trap("No trade approval found");
-            case (?app) {
-                if (app.expiresAt < Time.now()) Runtime.trap("Trade approval expired");
-                if (app.amount < amount or app.price != price) Runtime.trap("Parameters mismatch");
-            };
-        };
-        let sellerAmt = ownerAmt(seller, memecoin);
-        if (sellerAmt < amount) Runtime.trap("Seller insufficient balance");
-        let supply = coinSupply(memecoin);
-        if (supply == 0) Runtime.trap("Invalid memecoin");
-        let fee = if (ceoUser) 0 else Nat.div(price * amount, 500);
-        switch (wallets.get(caller)) {
-            case null Runtime.trap("Buyer wallet not found");
-            case (?w) {
-                let total = price * amount + fee;
-                if (w.balance < total) Runtime.trap("Insufficient ICP balance");
-                wallets.add(caller, { w with balance = Nat.sub(w.balance, total) });
-            };
-        };
-        switch (wallets.get(seller)) {
-            case null Runtime.trap("Seller wallet not found");
-            case (?w) { wallets.add(seller, { w with balance = w.balance + price * amount }) };
-        };
-        let buyerNew = ownerAmt(caller, memecoin) + amount;
-        let buyerPct = Nat.div(buyerNew * 100, supply);
-        let sellerNew = Nat.sub(sellerAmt, amount);
-        let sellerPct = Nat.div(sellerNew * 100, supply);
-        if (not ceoUser and buyerPct > 30) Runtime.trap("Buyer would exceed 30% limit");
-        ownershipRecords.add(caller.toText() # "-" # memecoin, {
-            owner = caller; memecoin; amount = buyerNew; percentage = buyerPct;
-        });
-        ownershipRecords.add(seller.toText() # "-" # memecoin, {
-            owner = seller; memecoin; amount = sellerNew; percentage = sellerPct;
-        });
-        let prevTxs = switch (tradingTransactions.get(memecoin)) { case null []; case (?t) t };
-        tradingTransactions.add(memecoin, cat(prevTxs, [{
-            memecoin; buyer = caller; seller; amount; price; timestamp = Time.now();
-        }]));
-        if (not ceoUser) {
-            let feeAmt = Nat.div(price * amount, 1000);
-            let prevFees = switch (feeRecords.get(memecoin)) { case null []; case (?f) f };
-            feeRecords.add(memecoin, cat(cat(prevFees, [{
-                user = caller; amount = feeAmt;
-                timestamp = Time.now(); depositAddress = officialDepositAddress1;
-            }]), [{
-                user = caller; amount = feeAmt;
-                timestamp = Time.now(); depositAddress = officialDepositAddress2;
-            }]));
-        };
-        tradeApprovals.remove(approvalKey);
+        ignore caller;
+        ignore memecoin;
+        ignore amount;
+        ignore price;
+        ignore seller;
+        Runtime.trap("Real DEX swaps and ICRC token transfers are not integrated yet. No trade was executed.");
     };
 
     public query ({ caller }) func getTradingTransactions() : async [TradingTransaction] {
@@ -797,7 +684,7 @@ actor {
         [officialDepositAddress1, officialDepositAddress2];
     };
     public query func getWalletConnectionOptions() : async [(Text, Bool)] {
-        [("Internet Identity", true), ("Icpswap wallet", true), ("Gmail login", false)];
+        [("Internet Identity", true), ("Icpswap wallet", false), ("Gmail login", false)];
     };
     public query func getActorId() : async Text {
         "Use the Caffeine/dfx frontend agent to retrieve the canister ID.";
@@ -898,7 +785,7 @@ actor {
     public query ({ caller }) func getIcpswapWalletConnectionStatus() : async Bool {
         requireACInit();
         requireNonAnon(caller);
-        true;
+        false;
     };
 
     public query ({ caller }) func getIcpswapWalletBalance() : async Nat {
