@@ -26,6 +26,13 @@ Release requirement: establish the legitimate owner principal through authoritat
 
 Release requirement: generate these values from the verified target deployment and validate Internet Identity origin and backend connectivity. Never guess canister IDs or derivation origins.
 
+
+### Critical: Caffeine build template preserves placeholder identity configuration
+
+The checked-in `src/frontend/canister.yaml` writes `project_id` and `ii_derivation_origin` as literal `undefined` during its build, while the backend canister ID is sourced from `BACKEND_CANISTER_ID` and the backend host is set to localhost. The checked-in `src/frontend/env.json` also contains placeholder values. A generic CI build passing does not validate the Caffeine deployment-generated runtime configuration.
+
+Release requirement: establish the authoritative source and variable names for project ID and Internet Identity derivation origin, validate all required values before building, and fail the deployment build rather than shipping placeholders or localhost values to production. See [deployment and release runbook](DEPLOYMENT_RELEASE_RUNBOOK.md).
+
 ### High: real ICP withdrawal is not implemented
 
 `withdrawICP()` unconditionally traps with a message that real withdrawals are not enabled. No withdrawal is performed.
@@ -72,3 +79,8 @@ GitHub Actions run **41271730583** for commit `eba8c92f36830ed3c99224fb50053c1ec
 - Backend job: pinned Motoko toolchain/package installation, Motoko type and stable-compatibility checks, and backend compilation all passed.
 
 This is useful source-level CI evidence, but it does **not** verify live canister IDs/controllers, runtime environment configuration, admin bootstrap safety, Internet Identity origin, ledger deposits/withdrawals, token deployment, DEX swaps, or production behavior. The release status therefore remains **NOT READY FOR PRODUCTION** until the release gates above are closed.
+
+
+## Deployment runbook
+
+A step-by-step evidence checklist and safe non-production test sequence is maintained in [docs/DEPLOYMENT_RELEASE_RUNBOOK.md](DEPLOYMENT_RELEASE_RUNBOOK.md). It records the distinction between passing source CI and a verified production deployment.
